@@ -139,6 +139,21 @@ limitations under the License.
     <module>build-support</module>
   </modules>
 
+  <repositories><!-- 代码库 -->
+    <repository>
+      <id>maven-ali</id>
+      <url>http://maven.aliyun.com/nexus/content/groups/public/</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+        <updatePolicy>always</updatePolicy>
+        <checksumPolicy>fail</checksumPolicy>
+      </snapshots>
+    </repository>
+  </repositories>
+
   <profiles>
 
     <profile>
@@ -147,6 +162,7 @@ limitations under the License.
         <activeByDefault>false</activeByDefault>
       </activation>
       <properties>
+        <!--suppress UnresolvedMavenProperty -->
         <thrift.executable>${env.THRIFT_HOME}/bin/thrift</thrift.executable>
       </properties>
     </profile>
@@ -695,7 +711,7 @@ limitations under the License.
         <artifactId>jdk.tools</artifactId>
         <version>1.8</version>
         <scope>system</scope>
-        <systemPath>${JAVA_HOME}/lib/tools.jar</systemPath>
+        <systemPath>C:/Program Files/Java/jdk1.8.0_181/lib/tools.jar</systemPath>
       </dependency>
       <!-- Dependencies: build -->
       <dependency>
@@ -1795,9 +1811,15 @@ limitations under the License.
         <groupId>com.github.spotbugs</groupId>
         <artifactId>spotbugs-maven-plugin</artifactId>
       </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-pmd-plugin</artifactId>
+              <configuration>
+                <excludeRoots>
+                  <excludeRoot>target/generated-sources/plugin</excludeRoot>
+                </excludeRoots>
+              </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
