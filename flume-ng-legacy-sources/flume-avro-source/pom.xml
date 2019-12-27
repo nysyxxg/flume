@@ -33,6 +33,7 @@ limitations under the License.
   <properties>
     <!-- TODO fix spotbugs violations -->
     <spotbugs.maxAllowedViolations>2</spotbugs.maxAllowedViolations>
+    <!--suppress UnresolvedMavenProperty -->
     <thrift.executable>${env.THRIFT_HOME}/bin/thrift</thrift.executable>
   </properties>
 
