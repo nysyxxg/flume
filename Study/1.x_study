@@ -6,9 +6,37 @@ Sink
 
 
 <dependency>
-        <groupId>jdk.tools</groupId>
-        <artifactId>jdk.tools</artifactId>
-        <version>1.8</version>
-        <scope>system</scope>
-        <systemPath>${JAVA_HOME}/lib/tools.jar</systemPath>
-      </dependency>
+<groupId>jdk.tools</groupId>
+<artifactId>jdk.tools</artifactId>
+<version>1.8</version>
+<scope>system</scope>
+<systemPath>${JAVA_HOME}/lib/tools.jar</systemPath>
+</dependency>
+
+下面以： NetcatSource  为例：
+1： Source端： setChannelProcessor  和  getChannelProcessor 方法
+       * 1：source 创建一个线程，使用NIO的方式，将数据封装成event，调用 processEvents方法处理
+       * 2：然后调用ChannelProcessor(通道处理器)的processEvent方法，将Event事件 ，put到Channel中去
+       *:3：使用  ChannelProcessor  通道处理器的processEvent方法需要经过下面几个过程：
+       *  Event首先经过拦截器链 ---->getRequiredChannels获取所有的通道---> 获取事务--->开启事务--> 将Event事件put到channel----->提交事务
+
+
+2：  Channel端： Channel 接口中put 和 take 方法 ，以及 getTransaction 方法
+     连接Source (Event Producer) 和  Sink (Event Consumer)， 本质上Channel 就是Buffer
+     支持事务的处理，保证原子性(Put 和  take 操作)
+     最重要的是: channel  必须保证线程安全的。
+
+MemoryChannel为例：
+      1：  MemoryChannel 继承了 BasicChannelSemantics  ，BasicChannelSemantics  继承了AbstractChannel 实现了  Channel  接口
+         BasicChannelSemantics  实现了 Channel 接口中put 和 take 方法 ，以及 getTransaction 方法
+      2： MemoryTransaction  保证了事务传输的线程安全
+
+3：Sink端：  setChannel 和 getChannel  以及 process  方法
+
+    连接到Channel ，消费里面的Event ，将其发送到destination,
+    有很多相应的sink类型，sink可以根据SInkGroup
+    和 SinkProcessor进行分组，通过Processor 由sinkRunner 轮询出来
+    sink的Process()方法 只能有一个线程访问
+LoggerSink  为例：
+   1：继承了 AbstractSink  抽象类， AbstractSink 中的方法保证了线程安全
+
