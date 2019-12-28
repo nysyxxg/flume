@@ -70,22 +70,21 @@ public class MemoryChannel extends BasicChannelSemantics {
      * 从上边代码发现这里只是具体方法的实现，实际的的调用是发生在 Source 端写事件和 Sink 读事件时，也就是事务发生时，
      * 如下代码逻辑，具体的实现可以参看前一篇博文《flume Source启动过程分析》
      * Channel ch = ...
-     *  Transaction tx = ch.getTransaction();
-     *  try {
-     *    tx.begin();
-     *    ...
-     *    // ch.put(event) or ch.take()    Source写事件调用put方法，Sink读事件调用take方法
-     *    ...
-     *    tx.commit();
-     *  } catch (ChannelException ex) {   // 发生异常则回滚事务
-     *    tx.rollback();
-     *    ...
-     *  } finally {
-     *    tx.close();
-     *  }
+     * Transaction tx = ch.getTransaction();
+     * try {
+     * tx.begin();
+     * ...
+     * // ch.put(event) or ch.take()    Source写事件调用put方法，Sink读事件调用take方法
+     * ...
+     * tx.commit();
+     * } catch (ChannelException ex) {   // 发生异常则回滚事务
+     * tx.rollback();
+     * ...
+     * } finally {
+     * tx.close();
+     * }
      * ————————————————
      * 原文链接：https://blog.csdn.net/ty_laurel/article/details/53907926
-     *
      */
     //核心重点类 ：保证了内存事务的线程安全
     private class MemoryTransaction extends BasicTransactionSemantics {
@@ -98,6 +97,7 @@ public class MemoryChannel extends BasicChannelSemantics {
         private final ChannelCounter channelCounter; //ChannelCounter类定义了监控指标数据的一些属性方法
         private int putByteCounter = 0;
         private int takeByteCounter = 0;
+
         //MemoryTransaction方法中初始化事务需要的两个阻塞双端队列
         public MemoryTransaction(int transCapacity, ChannelCounter counter) {
             putList = new LinkedBlockingDeque<Event>(transCapacity);
@@ -105,6 +105,7 @@ public class MemoryChannel extends BasicChannelSemantics {
 
             channelCounter = counter;
         }
+
         //重写父类BasicChannelSemantics中的几个事务处理方法，往putList队列中添加指定Event
         @Override // 将event放入到阻塞队列中
         protected void doPut(Event event) throws InterruptedException {
@@ -126,7 +127,8 @@ public class MemoryChannel extends BasicChannelSemantics {
         }
 
         /**
-         *    从MemoryChannel的queue队列中取元素，然后放入takeList里面，作为本次事务需要提交的Event
+         * 从MemoryChannel的queue队列中取元素，然后放入takeList里面，作为本次事务需要提交的Event
+         *
          * @return
          * @throws InterruptedException
          */
@@ -157,8 +159,9 @@ public class MemoryChannel extends BasicChannelSemantics {
         }
 
         /**
-         *   事务提交
+         * 事务提交
          * doCommit 的作用： 将putList队列中头部元素取出，然后commit传送到channel queue队列
+         *
          * @throws InterruptedException
          */
         @Override
@@ -211,6 +214,7 @@ public class MemoryChannel extends BasicChannelSemantics {
 
             channelCounter.setChannelSize(queue.size());
         }
+
         //事务回滚
         @Override
         protected void doRollback() {
@@ -272,13 +276,12 @@ public class MemoryChannel extends BasicChannelSemantics {
      * <li>byteCapacity = type long that defines the max number of bytes used for events in the queue.
      * <li>byteCapacityBufferPercentage = type int that defines the percent of buffer between byteCapacity and the estimated event size.
      * <li>keep-alive = type int that defines the number of second to wait for a queue permit
-     *
+     * <p>
      * MemoryChannel 第三部分就是通过configure方法获取配置文件系统，
      * 初始化MemoryChannel，其中对于配置信息的读取有两种方法，只在启动时读取一次或者动态的加载配置文件，
      * 动态读取配置文件时若修改了Channel 的容量大小，则会调用 resizeQueue 方法进行调整，如下：
      * ————————————————
      * 原文链接：https://blog.csdn.net/ty_laurel/article/details/53907926
-     *
      */
     @Override
     public void configure(Context context) {
@@ -336,7 +339,7 @@ public class MemoryChannel extends BasicChannelSemantics {
         } catch (NumberFormatException e) {
             keepAlive = defaultKeepAlive;
         }
-         //queue不为null，则为动态修改配置文件时，重新指定了capacity
+        //queue不为null，则为动态修改配置文件时，重新指定了capacity
         if (queue != null) {
             try {
                 resizeQueue(capacity);
@@ -384,6 +387,7 @@ public class MemoryChannel extends BasicChannelSemantics {
      * 老容量小于新容量，扩容，然后创建新容量的队列，将原本队列加入中所有的 event 添加至新队列中。
      * ————————————————
      * 原文链接：https://blog.csdn.net/ty_laurel/article/details/53907926
+     *
      * @param capacity
      * @throws InterruptedException
      */
