@@ -39,6 +39,11 @@ import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
+/**
+ * 下面我们总结一下整个flume的调用顺序。
+ * Application -->LifecycleSupervisor-(3s调度一次)--> MonitorRunnable --->
+ * PollingPropertiesFileConfigurationProvider-(30s调度一次)--> FileWatcherRunnable--->EventBus--->Application
+ */
 public class Application {
 
     private static final Logger logger = LoggerFactory
@@ -62,13 +67,21 @@ public class Application {
     }
 
     public synchronized void start() {
+        // 对所有的组件进行启动
         for (LifecycleAware component : components) {
+            // 具体每个component是怎么启动的，我们可以深入到LifecycleSupervisor.supervise()函数中查看
             supervisor.supervise(component, new SupervisorPolicy.AlwaysRestartPolicy(), LifecycleState.START);
         }
     }
 
+    /**
+     * 用到了： import com.google.common.eventbus.Subscribe;
+     * 在类Application中，我们可以找到事件处理方法handleConfigurationEvent(MaterializedConfiguration conf)。
+     * @param conf
+     */
     @Subscribe
     public synchronized void handleConfigurationEvent(MaterializedConfiguration conf) {
+        // 该方法调用stopAllComponents()和startAllComponents(conf)函数对所有的组件进行了重启。
         stopAllComponents();
         startAllComponents(conf);
     }
@@ -247,13 +260,13 @@ public class Application {
             }
 
             String agentName = commandLine.getOptionValue('n');
-            boolean reload = !commandLine.hasOption("no-reload-conf");
+            boolean reload = !commandLine.hasOption("no-reload-conf");//如果含有参数no-reload-conf，则 reload=true
 
             if (commandLine.hasOption('z') || commandLine.hasOption("zkConnString")) {
                 isZkConfigured = true;
             }
             Application application = null;
-            if (isZkConfigured) {
+            if (isZkConfigured) { // 如果设置了zk的配置
                 // get options
                 String zkConnectionStr = commandLine.getOptionValue('z');
                 String baseZkPath = commandLine.getOptionValue('p');
@@ -266,13 +279,21 @@ public class Application {
                     components.add(zookeeperConfigurationProvider);
                     application = new Application(components);
                     eventBus.register(application);
+                    /**
+                     * 以上代码用到了guava EventBus，guava的EventBus是观察者模式的一种优雅的解决方案，
+                     *  利用EventBus实现事件的发布和订阅，可以节省很多工作量。
+                     *  guava EventBus的原理和使用参见：https://www.jianshu.com/p/f8ba312904f4 。
+                     *  EventBus的观察者（事件订阅者）需要用@Subscribe 注释标注的函数来处理事件发布者发过来的事件。
+                     *  EventBus.register()用来注册观察者。
+                     * 链接：https://www.jianshu.com/p/8a19186c65d3
+                     */
                 } else {
                     StaticZooKeeperConfigurationProvider zookeeperConfigurationProvider =
                             new StaticZooKeeperConfigurationProvider(agentName, zkConnectionStr, baseZkPath);
                     application = new Application();
                     application.handleConfigurationEvent(zookeeperConfigurationProvider.getConfiguration());
                 }
-            } else {
+            } else { // 没有zk的配置
                 File configurationFile = new File(commandLine.getOptionValue('f'));
 
                 /*
@@ -298,12 +319,22 @@ public class Application {
 
                 if (reload) {
                     EventBus eventBus = new EventBus(agentName + "-event-bus");
+                    // PollingPropertiesFileConfigurationProvider 该类实现了接口LifecycleAware，flume中所有的组件都实现自该接口。
                     PollingPropertiesFileConfigurationProvider configurationProvider =
                             new PollingPropertiesFileConfigurationProvider(
                                     agentName, configurationFile, eventBus, 30);
                     components.add(configurationProvider);
+                    //最终，PollingPropertiesFileConfigurationProvider的对象被添加到全局属性List<LifecycleAware> components中
                     application = new Application(components);
                     eventBus.register(application);
+                    /**
+                     * 以上代码用到了guava EventBus，guava的EventBus是观察者模式的一种优雅的解决方案，
+                     *  利用EventBus实现事件的发布和订阅，可以节省很多工作量。
+                     *  guava EventBus的原理和使用参见：https://www.jianshu.com/p/f8ba312904f4 。
+                     *  EventBus的观察者（事件订阅者）需要用@Subscribe 注释标注的函数来处理事件发布者发过来的事件。
+                     *  EventBus.register()用来注册观察者。
+                     * 链接：https://www.jianshu.com/p/8a19186c65d3
+                     */
                 } else {
                     PropertiesFileConfigurationProvider configurationProvider =
                             new PropertiesFileConfigurationProvider(agentName, configurationFile);
@@ -311,6 +342,7 @@ public class Application {
                     application.handleConfigurationEvent(configurationProvider.getConfiguration());
                 }
             }
+            //然后调用Application的start()方法，对components进行启动
             application.start();
 
             final Application appReference = application;
