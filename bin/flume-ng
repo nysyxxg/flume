@@ -222,7 +222,11 @@ run_flume() {
 # set default params
 FLUME_CLASSPATH=""
 FLUME_JAVA_LIBRARY_PATH=""
-JAVA_OPTS="-Xmx20m"
+
+#JAVA_OPTS="-Xmx20m"
+开启远程DeBug模式
+JAVA_OPTS="-Xmx20m -Xdebug -Xrunjdwp:transport=dt_socket,address=5005,server=y,suspend=y"
+
 LD_LIBRARY_PATH=""
 
 opt_conf=""
