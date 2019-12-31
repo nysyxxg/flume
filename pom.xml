@@ -32,6 +32,25 @@ limitations under the License.
 
   <name>Apache Flume</name>
 
+  <repositories>
+    <repository>
+      <id>nexus.axiomalaska.com</id>
+      <url>http://nexus.axiomalaska.com/nexus/content/repositories/public</url>
+    </repository>
+    <repository>
+      <id>maven.aliyun.com</id>
+      <url>http://maven.aliyun.com/nexus/content/groups/public/</url>
+    </repository>
+    <repository>
+      <id>maven.tempo-db.com</id>
+      <url>http://maven.oschina.net/service/local/repositories/sonatype-public-grid/content/</url>
+    </repository>
+    <repository>
+      <id>p2.jfrog.org</id>
+      <url>http://p2.jfrog.org/libs-releases</url>
+    </repository>
+  </repositories>
+
   <properties>
     <!-- Set default encoding to UTF-8 to remove maven complaints -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

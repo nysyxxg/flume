@@ -46,6 +46,7 @@ limitations under the License.
     <module>flume-twitter-source</module>
     <module>flume-kafka-source</module>
     <module>flume-taildir-source</module>
+    <module>flume-win-taildir-source</module>
   </modules>
 
 </project>
