@@ -131,6 +131,10 @@ public class ChannelProcessor implements Configurable {
      * <p>Note that if multiple channels are configured, some {@link Transaction}s
      * may have already been committed while others may be rolled back in the
      * case of an exception.
+     *    * 在拿到事件之后，调用getChannelProcessor().processEventBatch(events)将数据封装成的事件导入到channel中，
+     *    * 在这里实现了事务，保证数据exectly once放入到channel的队列中。
+     *    * 在这期间，如果有拦截器（Interceptor），首先执行拦截器，
+     *    * 然后ChannelProcessor调用选择器（selector）将event到对应的channel中。具体ChannelProcessor的处理逻辑如下：
      *
      * @param events A list of events to put into the configured channels.
      * @throws ChannelException when a write to a required channel fails.
@@ -140,11 +144,9 @@ public class ChannelProcessor implements Configurable {
 
         events = interceptorChain.intercept(events);
 
-        Map<Channel, List<Event>> reqChannelQueue =
-                new LinkedHashMap<Channel, List<Event>>();
+        Map<Channel, List<Event>> reqChannelQueue = new LinkedHashMap<Channel, List<Event>>();
 
-        Map<Channel, List<Event>> optChannelQueue =
-                new LinkedHashMap<Channel, List<Event>>();
+        Map<Channel, List<Event>> optChannelQueue = new LinkedHashMap<Channel, List<Event>>();
 
         for (Event event : events) {
             List<Channel> reqChannels = selector.getRequiredChannels(event);

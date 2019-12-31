@@ -87,9 +87,14 @@ public abstract class AbstractConfigurationProvider implements ConfigurationProv
   }
 
   protected abstract FlumeConfiguration getFlumeConfiguration();
-
+/**
+ *   getConfiguration方法实现了配置参数的物化，将配置参数转换成了对应的对象，并将channel和对应的source和sink进行关联：
+ * 得到各个组件的对象，Application类的startAllComponents函数便可以对各个组件进行启动。
+ * 首先启动channel，确保channel都启动之后再启动sink和source，以channel为例我们来看下flume是怎么启动他们的：
+ *  加载顺序 ： loadChannels ---> loadSources ---> loadSinks
+ */
   public MaterializedConfiguration getConfiguration() {
-    MaterializedConfiguration conf = new SimpleMaterializedConfiguration();
+    MaterializedConfiguration conf = new SimpleMaterializedConfiguration(); // 简单物化配置
     FlumeConfiguration fconfig = getFlumeConfiguration();
     AgentConfiguration agentConf = fconfig.getConfigurationFor(getAgentName());
     if (agentConf != null) {
@@ -97,7 +102,7 @@ public abstract class AbstractConfigurationProvider implements ConfigurationProv
       Map<String, SourceRunner> sourceRunnerMap = Maps.newHashMap();
       Map<String, SinkRunner> sinkRunnerMap = Maps.newHashMap();
       try {
-        loadChannels(agentConf, channelComponentMap);
+        loadChannels(agentConf, channelComponentMap);  // 加载顺序
         loadSources(agentConf, channelComponentMap, sourceRunnerMap);
         loadSinks(agentConf, channelComponentMap, sinkRunnerMap);
         Set<String> channelNames = new HashSet<String>(channelComponentMap.keySet());

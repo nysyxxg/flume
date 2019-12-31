@@ -421,6 +421,7 @@ public class MemoryChannel extends BasicChannelSemantics {
         }
     }
 
+    // channel启动除了启动了monitorRunnable线程外，没有额外启动线程，sourceRunner和SinkRunner会启动其他线程。
     @Override
     public synchronized void start() {
         channelCounter.start();

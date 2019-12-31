@@ -30,7 +30,7 @@ import com.google.common.collect.ImmutableMap;
  * properties file. That is it's the actual Source, Sink, and Channels
  * represented in the configuration file.
  */
-public interface MaterializedConfiguration {
+public interface MaterializedConfiguration {  // 物化配置 接口
 
   public void addSourceRunner(String name, SourceRunner sourceRunner);
 

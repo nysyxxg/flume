@@ -145,6 +145,15 @@ public class LoadBalancingSinkProcessor extends AbstractSinkProcessor {
     selector.stop();
   }
 
+  /**
+   * 我们会发现SinkProcessor还有一个process方法，该方法实现自SinkProcessor接口，
+   * 同样用“Find Usages”查询发现，最终是SinkRunner的start()调用了process方法。
+   * SinkRunner初始化是在物化配置过程的loadSinkGroups里调用的。
+   * 一个SinkGroup有一个SinkProcessor，如果没有没有group则默认调用DefaultSinkProcessor。
+   *
+   * @return
+   * @throws EventDeliveryException
+   */
   @Override
   public Status process() throws EventDeliveryException {
     Status status = null;

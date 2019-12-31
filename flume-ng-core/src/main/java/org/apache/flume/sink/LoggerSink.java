@@ -79,6 +79,17 @@ public class LoggerSink extends AbstractSink implements Configurable {
     }
   }
 
+  /**
+   * 我们再看一下sink与channel是如何关联的。
+   * 以LoggerSink为例：
+   * 在Sink类中有一个Channel对象，在物化配置（详见1.2章节）调用loadSinks()方法的时候，
+   * 调用 sink.setChannel(channelComponent.channel);进行了初始化。
+   * process方法是Sink类中的主要执行方法，这个方法哪里调用的呢？
+   * 我们看到它实现自接口Sink，IDE中“find Usages”发现是sinkProcessor调用了sink的process：
+   * 我们随便打开一个SinkProcessor（以LoadBalancingSinkProcessor为例）的调用位置：
+   * @return
+   * @throws EventDeliveryException
+   */
   @Override
   public Status process() throws EventDeliveryException {
     Status result = Status.READY;

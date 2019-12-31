@@ -245,6 +245,7 @@ public class TaildirSource extends AbstractSource implements
       sourceCounter.addToEventReceivedCount(events.size());
       sourceCounter.incrementAppendBatchReceivedCount();
       try {
+
         getChannelProcessor().processEventBatch(events);
         reader.commit();
       } catch (ChannelException ex) {

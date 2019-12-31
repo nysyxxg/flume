@@ -41,8 +41,8 @@ import org.apache.flume.lifecycle.LifecycleAware;
  * While the {@link Sink#process()} call is guaranteed to only be accessed
  * by a single thread, other calls may be concurrently accessed and should
  * thus be protected.
- * </p>
  *
+ *  接口sink 将  sink  和 channel 进行关联
  * @see org.apache.flume.Channel
  * @see org.apache.flume.SinkProcessor
  * @see org.apache.flume.SinkRunner

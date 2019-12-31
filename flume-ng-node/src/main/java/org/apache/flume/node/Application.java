@@ -40,6 +40,7 @@ import java.util.*;
 import java.util.Map.Entry;
 
 /**
+ * 源码分析： https://www.jianshu.com/p/0c13fc947155
  * 下面我们总结一下整个flume的调用顺序。
  * Application -->LifecycleSupervisor-(3s调度一次)--> MonitorRunnable --->
  * PollingPropertiesFileConfigurationProvider-(30s调度一次)--> FileWatcherRunnable--->EventBus--->Application
@@ -77,6 +78,12 @@ public class Application {
     /**
      * 用到了： import com.google.common.eventbus.Subscribe;
      * 在类Application中，我们可以找到事件处理方法handleConfigurationEvent(MaterializedConfiguration conf)。
+     * <p>
+     * flume的启动方式分为两种：
+     * （1）自动监听配置文件变化利用eventBus发送事件重启所有组件；
+     * （2）没有监听配置文件直接启动。两种方式的启动入口都在类Application的
+     * public void handleConfigurationEvent(MaterializedConfiguration conf) {...}函数中。
+     *
      * @param conf
      */
     @Subscribe
@@ -131,11 +138,22 @@ public class Application {
         }
     }
 
+    /**
+     * // MaterializedConfiguration对象作为startAllComponents函数的形参，
+     * 在Application里调用了PropertiesFileConfigurationProvider的getConfiguration()方法得到MaterializedConfiguration对象：
+     * 首先启动channel，确保channel都启动之后再启动sink和source，以channel为例我们来看下flume是怎么启动他们的：
+     * 启动顺序是：Channel -> 等待所有channel都起来 -> Sink -> Source
+     *
+     * 在程序启动时，会启动MaterializedConfiguration中的所有的SourceRunner、Channel、SinkRunner。
+     * 其中Channel的启动，没做什么特别的事情，就是初始化一下状态、创建一下计数器，算做一个被动的角色。
+     *
+     * @param materializedConfiguration
+     */
     private void startAllComponents(MaterializedConfiguration materializedConfiguration) {
         logger.info("Starting new configuration:{}", materializedConfiguration);
 
         this.materializedConfiguration = materializedConfiguration;
-
+         //首先启动channel
         for (Entry<String, Channel> entry : materializedConfiguration.getChannels().entrySet()) {
             try {
                 logger.info("Starting Channel " + entry.getKey());
@@ -147,7 +165,7 @@ public class Application {
         }
 
         /*
-         * Wait for all channels to start.
+         * Wait for all channels to start.  等待所有的channel  启动
          */
         for (Channel ch : materializedConfiguration.getChannels().values()) {
             while (ch.getLifecycleState() != LifecycleState.START
@@ -162,7 +180,7 @@ public class Application {
                 }
             }
         }
-
+        // 然后启动 sink
         for (Entry<String, SinkRunner> entry : materializedConfiguration.getSinkRunners().entrySet()) {
             try {
                 logger.info("Starting Sink " + entry.getKey());
@@ -172,7 +190,7 @@ public class Application {
                 logger.error("Error while starting {}", entry.getValue(), e);
             }
         }
-
+        // 最后启动 source
         for (Entry<String, SourceRunner> entry :
                 materializedConfiguration.getSourceRunners().entrySet()) {
             try {
@@ -255,7 +273,8 @@ public class Application {
             CommandLineParser parser = new GnuParser();
             CommandLine commandLine = parser.parse(options, args);
 
-            if (commandLine.hasOption('h')) { new HelpFormatter().printHelp("flume-ng agent", options, true);
+            if (commandLine.hasOption('h')) {
+                new HelpFormatter().printHelp("flume-ng agent", options, true);
                 return;
             }
 
