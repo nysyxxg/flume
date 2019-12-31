@@ -41,10 +41,10 @@ import java.util.concurrent.*;
 
 import static org.apache.flume.source.wintaildir.TaildirSourceConfigurationConstants.*;
 
-public class TaildirSourceV2 extends AbstractSource implements
+public class TaildirSource extends AbstractSource implements
     PollableSource, Configurable {
 
-  private static final Logger logger = LoggerFactory.getLogger(TaildirSourceV2.class);
+  private static final Logger logger = LoggerFactory.getLogger(TaildirSource.class);
 
   private Map<String, String> filePaths;
   private Table<String, String, String> headerTable;
