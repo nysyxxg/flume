@@ -70,6 +70,8 @@ import org.slf4j.LoggerFactory;
  * {@code
  * Type type = new TypeToken<List<JSONEvent>>() {}.getType();
  * }
+ *  JSONHandler：提供的默认实现Handler,选择是[“header”:,"body":]这种格式，
+ *  其实里面提供了好几种event模式，不知道为什么要选择这种??
  */
 
 public class JSONHandler implements HTTPSourceHandler {

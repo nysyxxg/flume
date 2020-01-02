@@ -23,7 +23,7 @@ import org.apache.flume.FlumeException;
  *
  * Exception thrown by an HTTP Handler if the request was not parsed correctly
  * into an event because the request was not in the expected format.
- *
+ *  HTTPBadRequestException：定义一些http异常，常用的比如404。
  */
 public class HTTPBadRequestException extends FlumeException {
 

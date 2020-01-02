@@ -76,7 +76,7 @@ import java.util.Map;
  * unavailable status.
  *
  * A JSON handler which converts JSON objects to Flume events is provided.
- *
+ *  HTTPSource：这个就是主类了，里面有类似于main方法的start方法。
  */
 public class HTTPSource extends AbstractSource implements
         EventDrivenSource, Configurable {
