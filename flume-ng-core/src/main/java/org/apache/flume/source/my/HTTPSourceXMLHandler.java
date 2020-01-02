@@ -80,10 +80,8 @@ public class HTTPSourceXMLHandler implements HTTPSourceHandler {
                 Element event = (Element) nodes.item(i);
                 // Get all headers. If there are multiple header sections,
                 // combine them.
-                NodeList headerNodes
-                        = event.getElementsByTagName(HEADERS_TAG);
-                Map<String, String> eventHeaders
-                        = new HashMap<String, String>();
+                NodeList headerNodes = event.getElementsByTagName(HEADERS_TAG);
+                Map<String, String> eventHeaders = new HashMap<String, String>();
                 for (int j = 0; j < headerNodes.getLength(); j++) {
                     Node headerNode = headerNodes.item(j);
                     NodeList headers = headerNode.getChildNodes();
@@ -103,22 +101,17 @@ public class HTTPSourceXMLHandler implements HTTPSourceHandler {
                     }
                 }
                 Node body = event.getElementsByTagName(BODY_TAG).item(0);
-                if (insertTimestamp) {
-                    eventHeaders.put(TIMESTAMP_HEADER, String.valueOf(System
-                            .currentTimeMillis()));
+                if (insertTimestamp) {  // 判断event的 头部 是否插入时间戳
+                    eventHeaders.put(TIMESTAMP_HEADER, String.valueOf(System.currentTimeMillis()));
                 }
-                events.add(EventBuilder.withBody(
-                        body.getTextContent().getBytes(
-                                httpServletRequest.getCharacterEncoding()),
+                events.add(EventBuilder.withBody(body.getTextContent().getBytes(httpServletRequest.getCharacterEncoding()),
                         eventHeaders));
             }
         } catch (SAXException ex) {
-            throw new HTTPBadRequestException(
-                    "Request could not be parsed into valid XML", ex);
+            throw new HTTPBadRequestException("Request could not be parsed into valid XML", ex);
         } catch (Exception ex) {
             throw new HTTPBadRequestException(
-                    "Request is not in expected format. " +
-                            "Please refer documentation for expected format.", ex);
+                    "Request is not in expected format. " + "Please refer documentation for expected format.", ex);
         }
         return events;
     }
