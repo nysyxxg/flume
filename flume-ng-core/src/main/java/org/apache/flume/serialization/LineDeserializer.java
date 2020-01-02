@@ -133,7 +133,7 @@ public class LineDeserializer implements EventDeserializer {
       readChars++;
 
       // FIXME: support \r\n
-      if (c == '\n') {
+      if (c == '\n') {  // 每次读取一行数据
         break;
       }
 
