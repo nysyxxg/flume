@@ -40,6 +40,11 @@ limitations under the License.
   </build>
 
   <dependencies>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-lzo</artifactId>
+      <version>0.4.13</version>
+    </dependency>
 
     <dependency>
       <groupId>org.apache.flume</groupId>
@@ -137,6 +142,7 @@ limitations under the License.
           <artifactId>hadoop-test</artifactId>
           <scope>test</scope>
         </dependency>
+
 
         <!-- required because the hadoop-core pom is missing these deps
             and MiniDFSCluster pulls in the webhdfs classes -->
