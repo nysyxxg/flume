@@ -143,7 +143,7 @@ public class Application {
      * 在Application里调用了PropertiesFileConfigurationProvider的getConfiguration()方法得到MaterializedConfiguration对象：
      * 首先启动channel，确保channel都启动之后再启动sink和source，以channel为例我们来看下flume是怎么启动他们的：
      * 启动顺序是：Channel -> 等待所有channel都起来 -> Sink -> Source
-     *
+     * 关闭顺序反之：sources——>sinks——>channels；
      * 在程序启动时，会启动MaterializedConfiguration中的所有的SourceRunner、Channel、SinkRunner。
      * 其中Channel的启动，没做什么特别的事情，就是初始化一下状态、创建一下计数器，算做一个被动的角色。
      *
