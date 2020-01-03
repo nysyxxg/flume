@@ -348,7 +348,7 @@ public class FileChannel extends BasicChannelSemantics {
   }
 
   @Override
-  protected BasicTransactionSemantics createTransaction() {
+  public  BasicTransactionSemantics createTransaction() {
     if (!open) {
       String msg = "Channel closed " + channelNameDescriptor;
       if (startupError != null) {
@@ -438,6 +438,12 @@ public class FileChannel extends BasicChannelSemantics {
   Log getLog() {
     return log;
   }
+
+  // 为了DualChannel  新增方法
+  public Integer getQueueSize() {
+    return capacity - queueRemaining.availablePermits();
+  }
+
 
   @VisibleForTesting
   FileChannelCounter getChannelCounter() {
