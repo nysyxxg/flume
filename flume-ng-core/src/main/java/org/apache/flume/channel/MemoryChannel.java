@@ -264,7 +264,8 @@ public class MemoryChannel extends BasicChannelSemantics {
     private volatile int byteCapacityBufferPercentage;
     private Semaphore bytesRemaining;
     private ChannelCounter channelCounter;
-
+    // 将局部变量--转化为全局变量
+    private volatile Integer capacity;
     public MemoryChannel() {
         super();
     }
@@ -285,7 +286,7 @@ public class MemoryChannel extends BasicChannelSemantics {
      */
     @Override
     public void configure(Context context) {
-        Integer capacity = null;
+       //  Integer capacity = null;   // 将局部变量--转化为类全局变量
         try {
             capacity = context.getInteger("capacity", defaultCapacity);
         } catch (NumberFormatException e) {
@@ -456,4 +457,14 @@ public class MemoryChannel extends BasicChannelSemantics {
     int getBytesRemainingValue() {
         return bytesRemaining.availablePermits();
     }
+
+    // 为了DualChannel  新增方法
+    public Integer getQueueSize() {
+        return capacity - queueRemaining.availablePermits();
+    }
+    // 为了DualChannel  新增方法
+    public boolean isFull() {
+        return ((queueRemaining.availablePermits()/(float)capacity) <= 0.3);
+    }
+
 }
