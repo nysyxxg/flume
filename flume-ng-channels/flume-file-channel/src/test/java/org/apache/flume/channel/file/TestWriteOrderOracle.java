@@ -30,6 +30,7 @@ public class TestWriteOrderOracle {
     long current = WriteOrderOracle.next();
     current += Integer.MAX_VALUE;
     WriteOrderOracle.setSeed(current);
+    System.out.println(WriteOrderOracle.next() > System.currentTimeMillis());
     Assert.assertTrue(WriteOrderOracle.next() > System.currentTimeMillis());
   }
 
