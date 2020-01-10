@@ -577,6 +577,9 @@ public abstract class LogFile {
 
   public abstract static class SequentialReader {
 
+    //Flame的FileChannel在系统崩溃的时候保证数据的完整性和一致性，
+    // 其实是通过JDK的字节通道实现的（java.nio.channels.FileChannel）,字节通道为了保证数据在系统崩溃之后不丢失数据，
+    // 文件的修改模式会被强制到底层存储设备。
     private final RandomAccessFile fileHandle;
     private final FileChannel fileChannel;
     private final File file;

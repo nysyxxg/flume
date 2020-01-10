@@ -807,7 +807,7 @@ public class SpillableMemoryChannel extends FileChannel {
   }
 
   @Override
-  protected BasicTransactionSemantics createTransaction() {
+  public BasicTransactionSemantics createTransaction() {
     return new SpillableMemoryTransaction(channelCounter);
   }
 

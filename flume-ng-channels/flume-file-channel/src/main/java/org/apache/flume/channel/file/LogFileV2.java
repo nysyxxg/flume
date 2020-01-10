@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Represents a single data file on disk. Has methods to write,
  * read sequentially (replay), and read randomly (channel takes).
+ * 文件操作类：LogFile（LogFileV2在1.7已经被舍弃）
  */
 @Deprecated
 class LogFileV2 extends LogFile {
