@@ -104,7 +104,7 @@ public class TestKafkaSource {
         try {
             kafkaServer.createTopic(topic0, 1);
             usedTopics.add(topic0);
-            kafkaServer.createTopic(topic1, 3);
+            kafkaServer.createTopic(topic1, 1);
             usedTopics.add(topic1);
         } catch (TopicExistsException e) {
             //do nothing
@@ -114,6 +114,7 @@ public class TestKafkaSource {
         kafkaSource.setChannelProcessor(createGoodChannel());
     }
 
+    //  准备默认的Context
     private Context prepareDefaultContext(String groupId) {
         Context context = new Context();
         context.put(BOOTSTRAP_SERVERS, kafkaServer.getBootstrapServers());
@@ -132,44 +133,55 @@ public class TestKafkaSource {
     public void testOffsets() throws InterruptedException, EventDeliveryException {
         long batchDuration = 2000;
         context.put(TOPICS, topic1);
-        context.put(BATCH_DURATION_MS,
-                String.valueOf(batchDuration));
+        context.put(BATCH_DURATION_MS, String.valueOf(batchDuration));
         context.put(BATCH_SIZE, "3");
         kafkaSource.configure(context);
-        kafkaSource.start();
+        kafkaSource.start(); // 启动kafka的source
+
         Thread.sleep(500L);
-        Status status = kafkaSource.process();
+
+        Status status = kafkaSource.process();  // 获取source端的状态
+        System.out.println("TestKafkaSource.status=" + status);
         assertEquals(Status.BACKOFF, status);
         assertEquals(0, events.size());
+
         kafkaServer.produce(topic1, "", "record1");
         kafkaServer.produce(topic1, "", "record2");
         Thread.sleep(500L);
+
         status = kafkaSource.process();
+        System.out.println("TestKafkaSource.status=" + status);
         assertEquals(Status.READY, status);
         assertEquals(2, events.size());
         events.clear();
+
         kafkaServer.produce(topic1, "", "record3");
         kafkaServer.produce(topic1, "", "record4");
         kafkaServer.produce(topic1, "", "record5");
         Thread.sleep(500L);
-        assertEquals(Status.READY, kafkaSource.process());
+
+        status = kafkaSource.process();
+        assertEquals(Status.READY, status);
         assertEquals(3, events.size());
         assertEquals("record3", new String(events.get(0).getBody(), Charsets.UTF_8));
         assertEquals("record4", new String(events.get(1).getBody(), Charsets.UTF_8));
         assertEquals("record5", new String(events.get(2).getBody(), Charsets.UTF_8));
         events.clear();
+
         kafkaServer.produce(topic1, "", "record6");
         kafkaServer.produce(topic1, "", "record7");
         kafkaServer.produce(topic1, "", "record8");
         kafkaServer.produce(topic1, "", "record9");
         kafkaServer.produce(topic1, "", "record10");
         Thread.sleep(500L);
-        assertEquals(Status.READY, kafkaSource.process());
+        status = kafkaSource.process();
+        assertEquals(Status.READY, status);
         assertEquals(3, events.size());
         assertEquals("record6", new String(events.get(0).getBody(), Charsets.UTF_8));
         assertEquals("record7", new String(events.get(1).getBody(), Charsets.UTF_8));
         assertEquals("record8", new String(events.get(2).getBody(), Charsets.UTF_8));
         events.clear();
+
         kafkaServer.produce(topic1, "", "record11");
         // status must be READY due to time out exceed.
         assertEquals(Status.READY, kafkaSource.process());
@@ -178,10 +190,13 @@ public class TestKafkaSource {
         assertEquals("record10", new String(events.get(1).getBody(), Charsets.UTF_8));
         assertEquals("record11", new String(events.get(2).getBody(), Charsets.UTF_8));
         events.clear();
+
         kafkaServer.produce(topic1, "", "record12");
         kafkaServer.produce(topic1, "", "record13");
         // stop kafka source
         kafkaSource.stop();
+
+
         // start again
         kafkaSource = new KafkaSource();
         kafkaSource.setChannelProcessor(createGoodChannel());
@@ -828,7 +843,7 @@ public class TestKafkaSource {
         }
     }
 
-    ChannelProcessor createGoodChannel() {
+    ChannelProcessor createGoodChannel() { //创建channel
       //  mock测试就是在测试过程中，对于某些不容易构造或者不容易获取的对象，用一个虚拟的对象来创建以便测试的测试方法。
         ChannelProcessor channelProcessor = mock(ChannelProcessor.class);
         events = Lists.newArrayList();
@@ -839,7 +854,6 @@ public class TestKafkaSource {
                 return null;
             }
         }).when(channelProcessor).processEventBatch(any(List.class));
-
         return channelProcessor;
     }
 
@@ -855,7 +869,7 @@ public class TestKafkaSource {
         return channelProcessor;
     }
 
-    public String findUnusedTopic() {
+    public String findUnusedTopic() {// 获取没有使用过的topic
         String newTopic = null;
         boolean topicFound = false;
         while (!topicFound) {
@@ -871,10 +885,8 @@ public class TestKafkaSource {
     private Properties createProducerProps(String bootStrapServers) {
         Properties props = new Properties();
         props.put(ProducerConfig.ACKS_CONFIG, "-1");
-        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
-                "org.apache.kafka.common.serialization.StringSerializer");
-        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
-                "org.apache.kafka.common.serialization.ByteArraySerializer");
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArraySerializer");
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootStrapServers);
         return props;
     }

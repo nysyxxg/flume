@@ -37,110 +37,110 @@ import java.util.concurrent.ExecutionException;
 
 public class KafkaSourceEmbeddedKafka {
 
-  public static String HOST = InetAddress.getLoopbackAddress().getCanonicalHostName();
-
-  KafkaServerStartable kafkaServer;
-  KafkaSourceEmbeddedZookeeper zookeeper;
-
-  private static int findFreePort() {
-    try (ServerSocket socket = new ServerSocket(0)) {
-      return socket.getLocalPort();
-    } catch (IOException e) {
-      throw new AssertionError("Can not find free port.", e);
+    public static String HOST = InetAddress.getLoopbackAddress().getCanonicalHostName();
+    //kafka服务可启动类
+    KafkaServerStartable kafkaServer;
+    // 获取zk服务对象
+    KafkaSourceEmbeddedZookeeper zookeeper;
+    //获取端口号
+    private static int findFreePort() {
+        try (ServerSocket socket = new ServerSocket(0)) {
+            return socket.getLocalPort();
+        } catch (IOException e) {
+            throw new AssertionError("Can not find free port.", e);
+        }
     }
-  }
 
-  private int zkPort = findFreePort(); // none-standard
-  private int serverPort = findFreePort();
+    private int zkPort = findFreePort(); // none-standard
+    private int serverPort = findFreePort();
 
-  KafkaProducer<String, byte[]> producer;
-  File dir;
+    KafkaProducer<String, byte[]> producer;  // kafka的发送者对象
+    File dir;
 
-  public KafkaSourceEmbeddedKafka(Properties properties) {
-    zookeeper = new KafkaSourceEmbeddedZookeeper(zkPort);
-    dir = new File(System.getProperty("java.io.tmpdir"), "kafka_log-" + UUID.randomUUID());
-    try {
-      FileUtils.deleteDirectory(dir);
-    } catch (IOException e) {
-      e.printStackTrace();
+    public KafkaSourceEmbeddedKafka(Properties properties) {
+        zookeeper = new KafkaSourceEmbeddedZookeeper(zkPort);
+        dir = new File(System.getProperty("java.io.tmpdir"), "kafka_log-" + UUID.randomUUID());
+        try {
+            FileUtils.deleteDirectory(dir);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Properties props = new Properties();
+        props.put("zookeeper.connect", zookeeper.getConnectString());
+        props.put("broker.id", "1");
+        props.put("host.name", "localhost");
+        props.put("port", String.valueOf(serverPort));
+        props.put("log.dir", dir.getAbsolutePath());
+        if (properties != null) {
+            props.putAll(properties);
+        }
+        KafkaConfig config = new KafkaConfig(props);// 初始化kafka配置
+        kafkaServer = new KafkaServerStartable(config);
+        kafkaServer.startup(); // 启动kafka
+        initProducer();
     }
-    Properties props = new Properties();
-    props.put("zookeeper.connect",zookeeper.getConnectString());
-    props.put("broker.id","1");
-    props.put("host.name", "localhost");
-    props.put("port", String.valueOf(serverPort));
-    props.put("log.dir", dir.getAbsolutePath());
-    if (properties != null) {
-      props.putAll(properties);
+
+    public void stop() throws IOException {
+        producer.close();
+        kafkaServer.shutdown();
+        zookeeper.stopZookeeper();
     }
-    KafkaConfig config = new KafkaConfig(props);
-    kafkaServer = new KafkaServerStartable(config);
-    kafkaServer.startup();
-    initProducer();
-  }
 
-  public void stop() throws IOException {
-    producer.close();
-    kafkaServer.shutdown();
-    zookeeper.stopZookeeper();
-  }
-
-  public String getZkConnectString() {
-    return zookeeper.getConnectString();
-  }
-
-  public String getBootstrapServers() {
-    return HOST + ":" + serverPort;
-  }
-
-  private void initProducer() {
-    Properties props = new Properties();
-    props.put("bootstrap.servers", HOST + ":" + serverPort);
-    props.put("acks", "1");
-    producer = new KafkaProducer<String,byte[]>(props,
-            new StringSerializer(), new ByteArraySerializer());
-  }
-
-  public void produce(String topic, String k, String v) {
-    produce(topic, k, v.getBytes());
-  }
-
-  public void produce(String topic, String k, byte[] v) {
-    ProducerRecord<String, byte[]> rec = new ProducerRecord<String, byte[]>(topic, k, v);
-    try {
-      producer.send(rec).get();
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    } catch (ExecutionException e) {
-      e.printStackTrace();
+    public String getZkConnectString() {
+        return zookeeper.getConnectString();
     }
-  }
 
-  public void produce(String topic, int partition, String k, String v) {
-    produce(topic,partition,k,v.getBytes());
-  }
-
-  public void produce(String topic, int partition, String k, byte[] v) {
-    ProducerRecord<String, byte[]> rec = new ProducerRecord<String, byte[]>(topic, partition, k, v);
-    try {
-      producer.send(rec).get();
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    } catch (ExecutionException e) {
-      e.printStackTrace();
+    public String getBootstrapServers() {
+        return HOST + ":" + serverPort;
     }
-  }
 
-  public void createTopic(String topicName, int numPartitions) {
-    // Create a ZooKeeper client
-    int sessionTimeoutMs = 10000;
-    int connectionTimeoutMs = 10000;
-    ZkClient zkClient =
-        ZkUtils.createZkClient(HOST + ":" + zkPort, sessionTimeoutMs, connectionTimeoutMs);
-    ZkUtils zkUtils = ZkUtils.apply(zkClient, false);
-    int replicationFactor = 1;
-    Properties topicConfig = new Properties();
-    AdminUtils.createTopic(zkUtils, topicName, numPartitions, replicationFactor, topicConfig);
-  }
+    private void initProducer() {  // 初始化kafka的发送对象
+        Properties props = new Properties();
+        props.put("bootstrap.servers", HOST + ":" + serverPort);
+        props.put("acks", "1");
+        producer = new KafkaProducer<String, byte[]>(props, new StringSerializer(), new ByteArraySerializer());
+    }
+
+    public void produce(String topic, String k, String v) {
+        produce(topic, k, v.getBytes());
+    }
+
+    public void produce(String topic, String k, byte[] v) {
+        ProducerRecord<String, byte[]> rec = new ProducerRecord<String, byte[]>(topic, k, v);
+        try {
+            producer.send(rec).get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void produce(String topic, int partition, String k, String v) {
+        produce(topic, partition, k, v.getBytes());
+    }
+
+    public void produce(String topic, int partition, String k, byte[] v) {
+        ProducerRecord<String, byte[]> rec = new ProducerRecord<String, byte[]>(topic, partition, k, v);
+        try {
+            producer.send(rec).get();// 发送数据
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void createTopic(String topicName, int numPartitions) {
+        // Create a ZooKeeper client
+        int sessionTimeoutMs = 10000;
+        int connectionTimeoutMs = 10000;
+        ZkClient zkClient =
+                ZkUtils.createZkClient(HOST + ":" + zkPort, sessionTimeoutMs, connectionTimeoutMs);
+        ZkUtils zkUtils = ZkUtils.apply(zkClient, false);
+        int replicationFactor = 1;
+        Properties topicConfig = new Properties();
+        AdminUtils.createTopic(zkUtils, topicName, numPartitions, replicationFactor, topicConfig);
+    }
 
 }
